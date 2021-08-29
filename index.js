@@ -7,6 +7,27 @@ const port = 3000;
 
 app.use(express.json());
 
+const validaId = id => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(422).send({ error: "ID inválido" });
+    return;
+  }
+};
+
+const jogoExiste = jogo => {
+  if (!jogo) {
+    res.status(404).send({ erro: "Jogo não encontrado!" });
+    return;
+  }
+};
+
+const validaJogo = jogo => {
+  if (!jogo || !jogo.nome || !jogo.imagem) {
+    res.status(400).send({ error: "Jogo inválido!" });
+    return;
+  }
+};
+
 app.get("/", (req, res) => {
   res.send({ info: "Projeto de jogos com MongoDB" });
 });
@@ -19,17 +40,11 @@ app.get("/jogos", async (req, res) => {
 app.get("/jogos/:id", async (req, res) => {
   const id = req.params.id;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(422).send({ error: "ID inválido" });
-    return;
-  }
+  validaId(id);
 
   const jogo = await jogoSchema.findById(id);
 
-  if (!jogo) {
-    res.status(404).send({ erro: "Jogo não encontrado!" });
-    return;
-  }
+  jogoExiste(jogo);
 
   res.send({ jogo });
 });
@@ -37,10 +52,7 @@ app.get("/jogos/:id", async (req, res) => {
 app.post("/jogos", async (req, res) => {
   const jogo = req.body;
 
-  if (!jogo || !jogo.nome || !jogo.imagem) {
-    res.status(400).send({ error: "Jogo inválido!" });
-    return;
-  }
+  validaJogo(jogo);
 
   const novoJogo = await new jogoSchema(jogo).save();
   res.status(201).send({ novoJogo });
@@ -49,24 +61,15 @@ app.post("/jogos", async (req, res) => {
 app.put("/jogos/:id", async (req, res) => {
   const id = req.params.id;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(422).send({ error: "ID inválido" });
-    return;
-  }
+  validaId(id);
 
   const jogo = await jogoSchema.findById(id);
 
-  if (!jogo) {
-    res.status(404).send({ erro: "Jogo não encontrado!" });
-    return;
-  }
+  jogoExiste(jogo);
 
   const novoJogo = req.body;
 
-  if (!jogo || !jogo.nome || !jogo.imagem) {
-    res.status(400).send({ error: "Jogo inválido!" });
-    return;
-  }
+  validaJogo(jogo);
 
   await jogoSchema.findOneAndUpdate({ _id: id }, novoJogo);
   const jogoAtualizado = await jogoSchema.findById(id);
@@ -77,17 +80,11 @@ app.put("/jogos/:id", async (req, res) => {
 app.delete("/jogos/:id", async (req, res) => {
   const id = req.params.id;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    res.status(422).send({ error: "ID inválido" });
-    return;
-  }
+  validaId(id);
 
   const jogo = await jogoSchema.findById(id);
 
-  if (!jogo) {
-    res.status(404).send({ erro: "Jogo não encontrado!" });
-    return;
-  }
+  jogoExiste(jogo);
 
   await jogoSchema.findByIdAndDelete(id);
   res.send({ message: "Jogo excluído com sucesso!" });
